@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from '../../services/store';
 import { RootState } from '../../services/store';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
-import { TIngredient } from '@utils-types';
+import { TIngredient, TOrder } from '@utils-types';
 import { getOrderByNumberApi } from '../../utils/burger-api';
 
 type TIngredientsWithCount = {
@@ -15,7 +15,7 @@ export const OrderInfo: FC = () => {
   const { number } = useParams();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
-  const [orderData, setOrderData] = useState<any>(null);
+  const [orderData, setOrderData] = useState<TOrder | null>(null);
 
   const ingredients = useSelector(
     (state: RootState) => state.ingredients.items

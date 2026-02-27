@@ -51,12 +51,16 @@ export const BurgerConstructor: FC = () => {
       ...ingredients.map((item: TIngredient) => item._id),
       bun._id
     ];
-    dispatch(placeOrder(ingredientsIds));
+
+    dispatch(placeOrder(ingredientsIds)).then((action) => {
+      if (action.type.endsWith('fulfilled')) {
+        dispatch(clearConstructor());
+      }
+    });
   };
 
   const closeOrderModalHandler = () => {
     dispatch(clearOrder());
-    dispatch(clearConstructor());
   };
 
   const price = useMemo(
