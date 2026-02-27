@@ -50,7 +50,7 @@ export const logoutUser = createAsyncThunk('user/logout', async () => {
   localStorage.removeItem('refreshToken');
 });
 
-interface UserState {
+export interface UserState {
   user: TUser | null;
   isAuthChecked: boolean;
   loading: boolean;
