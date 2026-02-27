@@ -7,7 +7,7 @@ export const getFeeds = createAsyncThunk('feed/getFeeds', async () => {
   return response;
 });
 
-interface FeedState {
+export interface FeedState {
   orders: TOrder[];
   total: number;
   totalToday: number;

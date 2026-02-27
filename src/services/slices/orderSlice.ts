@@ -10,7 +10,7 @@ export const placeOrder = createAsyncThunk(
   }
 );
 
-interface OrderState {
+export interface OrderState {
   order: TOrder | null;
   orderRequest: boolean;
   orderModalData: TOrder | null;
