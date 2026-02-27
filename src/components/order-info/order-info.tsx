@@ -1,55 +1,79 @@
-import { FC, useMemo } from 'react';
+import { FC, useMemo, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from '../../services/store';
+import { RootState } from '../../services/store';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
+import { getOrderByNumberApi } from '../../utils/burger-api';
+
+type TIngredientsWithCount = {
+  [key: string]: TIngredient & { count: number };
+};
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
-  };
+  const { number } = useParams();
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
+  const [orderData, setOrderData] = useState<any>(null);
 
-  const ingredients: TIngredient[] = [];
+  const ingredients = useSelector(
+    (state: RootState) => state.ingredients.items
+  );
 
-  /* Готовим данные для отображения */
+  const feedOrder = useSelector((state: RootState) =>
+    state.feed.orders.find((o) => o.number === Number(number))
+  );
+
+  const profileOrder = useSelector((state: RootState) =>
+    state.profileOrders.orders.find((o) => o.number === Number(number))
+  );
+
+  useEffect(() => {
+    const loadOrder = async () => {
+      const existingOrder = feedOrder || profileOrder;
+
+      if (existingOrder) {
+        setOrderData(existingOrder);
+        setLoading(false);
+      } else {
+        try {
+          const data = await getOrderByNumberApi(Number(number));
+          setOrderData(data.orders[0]);
+        } catch (error) {
+          console.error('Ошибка загрузки заказа', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadOrder();
+  }, [number, feedOrder, profileOrder]);
+
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
 
     const date = new Date(orderData.createdAt);
 
-    type TIngredientsWithCount = {
-      [key: string]: TIngredient & { count: number };
-    };
+    const ingredientsInfo: TIngredientsWithCount = {};
+    let total = 0;
 
-    const ingredientsInfo = orderData.ingredients.reduce(
-      (acc: TIngredientsWithCount, item) => {
-        if (!acc[item]) {
-          const ingredient = ingredients.find((ing) => ing._id === item);
-          if (ingredient) {
-            acc[item] = {
-              ...ingredient,
-              count: 1
-            };
-          }
-        } else {
-          acc[item].count++;
+    orderData.ingredients.forEach((item: string) => {
+      if (!ingredientsInfo[item]) {
+        const ingredient = ingredients.find((ing) => ing._id === item);
+        if (ingredient) {
+          ingredientsInfo[item] = {
+            ...ingredient,
+            count: 1
+          };
+          total += ingredient.price;
         }
-
-        return acc;
-      },
-      {}
-    );
-
-    const total = Object.values(ingredientsInfo).reduce(
-      (acc, item) => acc + item.price * item.count,
-      0
-    );
+      } else {
+        ingredientsInfo[item].count++;
+        total += ingredientsInfo[item].price;
+      }
+    });
 
     return {
       ...orderData,
@@ -59,7 +83,7 @@ export const OrderInfo: FC = () => {
     };
   }, [orderData, ingredients]);
 
-  if (!orderInfo) {
+  if (loading || !orderInfo) {
     return <Preloader />;
   }
 
